@@ -1,15 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
-<title>Vote</title>
+<title>Oops! Error popped Out</title>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Lato">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Montserrat">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
-<link rel="stylesheet" href="https://cdn.materialdesignicons.com/4.9.95/css/materialdesignicons.min.css" />
-<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto&display=swap" />
-<script src="https://code.iconify.design/1/1.0.6/iconify.min.js"></script>
 
 <style>
     body,
@@ -138,55 +135,42 @@
     }
 </style>
 
-<script>
-    function sleep(ms) {
-        return new Promise(resolve => setTimeout(resolve, ms))
-    }
-    async function sure(i) {
-        if(confirm("Are you sure that you want to vote for this Candidate?")) {
-            console.log(i)
-            var url = "http://localhost:10000"
-            var xhr = new XMLHttpRequest()
-            var params = "voteTo="+i
-            xhr.open("GET", url + "/voterVoted?" + params)
-            xhr.setRequestHeader('Content-type', 'application/x-www-form-urlencoded')
-            xhr.send(params)
-            alert("Wait for some time until Voting process is completed....")
-            await sleep(4000)
-            window.location.href = "/loginVoter"
-        }
-    }
-</script>
-
-<body style="overflow: hidden;">
+<body>
 
     <!-- Navbar -->
     <div class="w3-top">
         <div class="w3-bar w3-red w3-card w3-left-align w3-large">
-            <a href="/loginVoter" class="w3-bar-item w3-button w3-padding-large w3-hover-white">Home</a>
-            <a href="javascript:document.reload(true)" class="w3-bar-item w3-button w3-padding-large w3-hover-white"
-                style="float: right;">Vote</a>
-            <a href="/" class="w3-bar-item w3-button w3-padding-large w3-hover-white"
-                style="float: right;">Log Out</a>
         </div>
 
         <!-- Navbar on small screens -->
         <div id="navDemo" class="w3-bar-block w3-white w3-hide w3-hide-large w3-hide-medium w3-large">
-            <a href="#" class="w3-bar-item w3-button w3-padding-large">Login</a>
-            <a href="#" class="w3-bar-item w3-button w3-padding-large">Register</a>
         </div>
     </div>
 
-    <div id="loginPageVote">
-        <div id="login" style="padding-top: 5%;">
-            <h1 id="userDet" style="padding-left: 20%;text-align: left;">Candidate Details</h1>
-            <div style="max-width: 70%;margin: 10px auto;padding: 10px 20px;background: #f4f7f8;border-radius: 8px;">
-                <table id="loginPageVoteTable" class="w3-table-all">
-                    
-                </table>
+    <div id="home" style="overflow-y: hidden;">
+        <!-- Header -->
+        <header class="w3-container w3-red w3-center" style="padding:128px 16px">
+            <h1 class="w3-margin w3-jumbo">Thank You</h1>
+            <p class="w3-xlarge">Elections have finished</p>
+            <a href="/"><button class="w3-button w3-black w3-padding-large w3-large w3-margin-top">Home</button></a>
+        </header>
+
+        <div class="w3-row-padding w3-padding-32 w3-container">
+            <div class="w3-content">
+
+                <h5 id="errorMessage" class="w3-text-grey">Press the Home button for getting back to the Home Page, results
+                    will be displayed as soon as possible. Contact administrator for more details
+                </h5>
+                <br/>
+                <br/>
+                <h6 class="w3-text-grey">
+                    Arya Bhivpathaki<br>
+                    arya.bhivpathaki18@gmail.com
+                </h6>
             </div>
+
         </div>
+    </div>
     </div>
 </body>
-
 </html>

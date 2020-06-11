@@ -139,15 +139,19 @@
 </style>
 
 <script>
-    function showRegister() {
-        document.getElementById("register").hidden = false
-        document.getElementById("login").hidden = true
-        document.getElementById("home").hidden = true
+    function haltElection() {
+        if(confirm("Are you sure that you want to stop election from this server node?")) {
+            var url = "http://localhost:10000"
+            var xhr = new XMLHttpRequest()
+            xhr.open("GET", url + "/haltElection")
+            xhr.setRequestHeader('Content-type', 'application/x-www-form-urlencoded')
+            xhr.send()
+            location.reload()
+        }
     }
-    
 </script>
 
-<body style="overflow: hidden;" onload="App.fillCandidateTable()">
+<body style="overflow: hidden;">
 
     <!-- Navbar -->
     <div class="w3-top">
@@ -176,13 +180,11 @@
                 <table id="adminDashTable" class="w3-table-all">
                     
                 </table>
+                <button id='finish' type="submit" onclick="haltElection()" class="w3-button w3-red w3-padding-large w3-medium w3-margin-top"
+            type="submit" style="float: right;">Finish Elections</button>
             </div>
         </div>
     </div>
-
-
-
-
 
     <script>
         // Used to toggle the menu on small screens when clicking on the menu button
@@ -195,7 +197,6 @@
             }
         }
     </script>
-    <script src="index.js"></script>
 </body>
 
 </html>

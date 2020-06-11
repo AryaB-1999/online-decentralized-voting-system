@@ -32,6 +32,8 @@ var voteFile
 var voterID
 var password
 
+var halt = false
+
 // App attributes 
 
 app.use(bodyParser.urlencoded({ extended: false }))
@@ -40,7 +42,7 @@ app.use(session({
     saveUninitialized: true,
     secret: "secret",
 }))
-app.listen(8080)
+app.listen(10000)
 
 // Loading Web3 and accounts
 
@@ -218,191 +220,262 @@ app.get('/', function (request, response) {
 })
 
 app.get('/register', function (request, response) {
-    try {
-        response.sendFile(path.join(__dirname + "/register.html"))
-    } catch(err) {
-        file = fs.readFileSync(__dirname + "/error.html")
-        errorFile = new JSDOM(file)
-        errorFile.window.document.getElementById("errorMessage").innerHTML = err
-        response.send(errorFile.serialize())
+    if(!halt) {
+        try {
+            response.sendFile(path.join(__dirname + "/register.html"))
+        } catch(err) {
+            file = fs.readFileSync(__dirname + "/error.html")
+            errorFile = new JSDOM(file)
+            errorFile.window.document.getElementById("errorMessage").innerHTML = err
+            response.send(errorFile.serialize())
+        }
+    }
+    else {
+        // response.send("Election has ended")
+        response.sendFile(path.join(__dirname + "/halted.html"))
     }
 })
 
 app.get('/login', function (request, response) {
-    try {
-        response.sendFile(path.join(__dirname + "/login.html"))
-    } catch(err) {
-        file = fs.readFileSync(__dirname + "/error.html")
-        errorFile = new JSDOM(file)
-        errorFile.window.document.getElementById("errorMessage").innerHTML = err
-        response.send(errorFile)
+    if(!halt) {
+        try {
+            response.sendFile(path.join(__dirname + "/login.html"))
+        } catch(err) {
+            file = fs.readFileSync(__dirname + "/error.html")
+            errorFile = new JSDOM(file)
+            errorFile.window.document.getElementById("errorMessage").innerHTML = err
+            response.send(errorFile)
+        }
+    } else {
+        // response.send("Election has ended")
+        response.sendFile(path.join(__dirname + "/halted.html"))
     }
 })
 
 app.get('/registerCandidate', function (request, response) {
-    try {
-        response.sendFile(path.join(__dirname + "/adminRegister.html"))
-    } catch(err) {
-        file = fs.readFileSync(__dirname + "/error.html")
-        errorFile = new JSDOM(file)
-        errorFile.window.document.getElementById("errorMessage").innerHTML = err
-        response.send(errorFile.serialize())
+    if(!halt) {
+        try {
+            response.sendFile(path.join(__dirname + "/adminRegister.html"))
+        } catch(err) {
+            file = fs.readFileSync(__dirname + "/error.html")
+            errorFile = new JSDOM(file)
+            errorFile.window.document.getElementById("errorMessage").innerHTML = err
+            response.send(errorFile.serialize())
+        }
+    } else {
+        // response.send("Election has ended")
+        response.sendFile(path.join(__dirname + "/halted.html"))
     }
 })
 
 app.post('/registerVoter', async function (request, response) {
-    try {
-        // console.log(request.body)
-        var voterNo = await registerVoter(request.body.voterName, request.body.voterID, request.body.voterAge, request.body.voterPassword)
-        console.log("returned", voterNo)
-        file = fs.readFileSync(__dirname + "/userRegistered.html").toString()
-        userRegistered = new JSDOM(file)
-        userRegistered.window.document.getElementById("voterID").innerHTML = "<b>" + (voterNo - 1) + "</b>"
-        response.send(userRegistered.serialize())
-    } catch(err) {
-        file = fs.readFileSync(__dirname + "/error.html")
-        errorFile = new JSDOM(file)
-        errorFile.window.document.getElementById("errorMessage").innerHTML = err
-        response.send(errorFile.serialize())
+    if(!halt) {
+        try {
+            // console.log(request.body)
+            var voterNo = await registerVoter(request.body.voterName, request.body.voterID, request.body.voterAge, request.body.voterPassword)
+            console.log("returned", voterNo)
+            file = fs.readFileSync(__dirname + "/userRegistered.html").toString()
+            userRegistered = new JSDOM(file)
+            userRegistered.window.document.getElementById("voterID").innerHTML = "<b>" + (voterNo - 1) + "</b>"
+            response.send(userRegistered.serialize())
+        } catch(err) {
+            file = fs.readFileSync(__dirname + "/error.html")
+            errorFile = new JSDOM(file)
+            errorFile.window.document.getElementById("errorMessage").innerHTML = err
+            response.send(errorFile.serialize())
+        }
+    } else {
+        // response.send("Election has ended")
+        response.sendFile(path.join(__dirname + "/halted.html"))
     }
 })
 
 app.get('/loginVoter', async function (request, response) {
-    try {
-        if (voterID == undefined) {
-            if (request.query.voterID == 'admin') {
-                response.redirect('/adminDash')
+    if(!halt) {
+        try {
+            if (voterID == undefined) {
+                if (request.query.voterID == 'admin') {
+                    response.redirect('/adminDash')
+                }
+                else {
+                    file = fs.readFileSync(__dirname + "/voterDash.html").toString()
+                    voterDash = new JSDOM(file)
+                    var details = await getDetails(request.query.voterID)
+                    password = request.query.voterPassword
+                    voterID = request.query.voterID
+                    if(details[4] == password) {
+                        console.log(details)
+                        voterDash.window.document.getElementById("loginNum").innerHTML = voterID
+                        voterDash.window.document.getElementById("userDet").innerHTML = "Hello, " + details[0]
+                        voterDash.window.document.getElementById("loginName").innerHTML = details[0]
+                        voterDash.window.document.getElementById("loginIDProof").innerHTML = details[1]
+                        voterDash.window.document.getElementById("loginAge").innerHTML = details[2]
+                        console.log("My password : " + details[4])
+                        if (details[3] == -1) {
+                            voterDash.window.document.getElementById("loginVotedTo").innerHTML = "Not Voted"
+                        } else {
+                            voterDash.window.document.getElementById("loginVotedTo").innerHTML = details[3]
+                        }
+                        response.set('voterID', request.query.voterID)
+                        response.send(voterDash.serialize())
+                    } else {
+                        response.send("Wrong Password for Voter ID")
+                    }
+                }
             }
             else {
-                file = fs.readFileSync(__dirname + "/voterDash.html").toString()
-                voterDash = new JSDOM(file)
-                var details = await getDetails(request.query.voterID)
-                password = request.query.voterPassword
-                voterID = request.query.voterID
-                if(details[4] == password) {
+                try {
+                    file = fs.readFileSync(__dirname + "/voterDash.html").toString()
+                    voterDash = new JSDOM(file)
+                    var details = await getDetails(voterID)
                     console.log(details)
+                    if (await checkIfEligible(voterID)) {
+                        voterDash.window.alert("You are not eligible for voting now")
+                        voterDash.window.document.getElementById('voteFlag').remove
+                    }
                     voterDash.window.document.getElementById("loginNum").innerHTML = voterID
                     voterDash.window.document.getElementById("userDet").innerHTML = "Hello, " + details[0]
                     voterDash.window.document.getElementById("loginName").innerHTML = details[0]
                     voterDash.window.document.getElementById("loginIDProof").innerHTML = details[1]
                     voterDash.window.document.getElementById("loginAge").innerHTML = details[2]
-                    voterDash.window.document.getElementById("voterPassword").innerHTML = details[4]
                     if (details[3] == -1) {
                         voterDash.window.document.getElementById("loginVotedTo").innerHTML = "Not Voted"
                     } else {
                         voterDash.window.document.getElementById("loginVotedTo").innerHTML = details[3]
                     }
-                    response.set('voterID', request.query.voterID)
+                    console.log(voterDash.window.document.getElementById('voteFlag').hidden)
                     response.send(voterDash.serialize())
-                } else {
-                    response.send("Wrong Password for Voter ID")
+                } catch (err) {
+                    response.send("Error caught" + err)
                 }
             }
+        } catch(err) {
+            file = fs.readFileSync(__dirname + "/error.html")
+            errorFile = new JSDOM(file)
+            errorFile.window.document.getElementById("errorMessage").innerHTML = err
+            response.send(errorFile.serialize())
         }
-        else {
-            try {
-                file = fs.readFileSync(__dirname + "/voterDash.html").toString()
-                voterDash = new JSDOM(file)
-                var details = await getDetails(voterID)
-                console.log(details)
-                if (await checkIfEligible(voterID)) {
-                    voterDash.window.alert("You are not eligible for voting now")
-                    voterDash.window.document.getElementById('voteFlag').remove
-                }
-                voterDash.window.document.getElementById("loginNum").innerHTML = voterID
-                voterDash.window.document.getElementById("userDet").innerHTML = "Hello, " + details[0]
-                voterDash.window.document.getElementById("loginName").innerHTML = details[0]
-                voterDash.window.document.getElementById("loginIDProof").innerHTML = details[1]
-                voterDash.window.document.getElementById("loginAge").innerHTML = details[2]
-                if (details[3] == -1) {
-                    voterDash.window.document.getElementById("loginVotedTo").innerHTML = "Not Voted"
-                } else {
-                    voterDash.window.document.getElementById("loginVotedTo").innerHTML = details[3]
-                }
-                console.log(voterDash.window.document.getElementById('voteFlag').hidden)
-                response.send(voterDash.serialize())
-            } catch (err) {
-                response.send("Error caught" + err)
-            }
-        }
-    } catch(err) {
-        file = fs.readFileSync(__dirname + "/error.html")
-        errorFile = new JSDOM(file)
-        errorFile.window.document.getElementById("errorMessage").innerHTML = err
-        response.send(errorFile.serialize())
+    }
+    else {
+        // response.send("Election has ended")
+        response.sendFile(path.join(__dirname + "/halted.html"))
     }
 })
 
 app.get('/vote', async function (request, response) {
-    try {
-        if (await checkIfEligible(voterID)) {
-            console.log(voterID)
-            var allCandidates = await getCandidates()
-            file = fs.readFileSync(__dirname + "/vote.html").toString()
-            voteFile = new JSDOM(file)
-            voteFile.window.document.getElementById('loginPageVoteTable').innerHTML = allCandidates
-            // console.log(voteFile.window.document.getElementById('loginPageVoteTable').innerHTML)
-            response.send(voteFile.serialize())
-        } else {
-            console.log("Voter ID", voterID)
-            response.redirect('/loginVoter')
+    if(!halt) {
+        try {
+            if (await checkIfEligible(voterID)) {
+                console.log(voterID)
+                var allCandidates = await getCandidates()
+                file = fs.readFileSync(__dirname + "/vote.html").toString()
+                voteFile = new JSDOM(file)
+                voteFile.window.document.getElementById('loginPageVoteTable').innerHTML = allCandidates
+                // console.log(voteFile.window.document.getElementById('loginPageVoteTable').innerHTML)
+                response.send(voteFile.serialize())
+            } else {
+                console.log("Voter ID", voterID)
+                response.redirect('/loginVoter')
+            }
+        } catch(err) {
+            file = fs.readFileSync(__dirname + "/error.html")
+            errorFile = new JSDOM(file)
+            errorFile.window.document.getElementById("errorMessage").innerHTML = err
+            response.send(errorFile.serialize())
         }
-    } catch(err) {
-        file = fs.readFileSync(__dirname + "/error.html")
-        errorFile = new JSDOM(file)
-        errorFile.window.document.getElementById("errorMessage").innerHTML = err
-        response.send(errorFile.serialize())
+    } else {
+        // response.send("Election has ended")
+        response.sendFile(path.join(__dirname + "/halted.html"))
     }
 })
 
 app.get('/adminDash', async function (request, response) {
-    try {
-        var allCandidates = await getCandidatesForAdmin()
-        file = fs.readFileSync(__dirname + "/adminDash.html").toString()
-        adminDash = new JSDOM(file)
-        adminDash.window.document.getElementById('adminDashTable').innerHTML = allCandidates
-        response.send(adminDash.serialize())
-    } catch(err) {
-        file = fs.readFileSync(__dirname + "/error.html")
-        errorFile = new JSDOM(file)
-        errorFile.window.document.getElementById("errorMessage").innerHTML = err
-        response.send(errorFile.serialize())
+    if(!halt) {
+        try {
+            var allCandidates = await getCandidatesForAdmin()
+            file = fs.readFileSync(__dirname + "/adminDash.html").toString()
+            adminDash = new JSDOM(file)
+            adminDash.window.document.getElementById('adminDashTable').innerHTML = allCandidates
+            response.send(adminDash.serialize())
+        } catch(err) {
+            file = fs.readFileSync(__dirname + "/error.html")
+            errorFile = new JSDOM(file)
+            errorFile.window.document.getElementById("errorMessage").innerHTML = err
+            response.send(errorFile.serialize())
+        }
+    } else {
+        try {
+            var allCandidates = await getCandidatesForAdmin()
+            file = fs.readFileSync(__dirname + "/adminDash.html").toString()
+            adminDash = new JSDOM(file)
+            adminDash.window.document.getElementById('adminDashTable').innerHTML = allCandidates
+            adminDash.window.document.getElementById('finish').remove()
+            response.send(adminDash.serialize())
+        } catch(err) {
+            file = fs.readFileSync(__dirname + "/error.html")
+            errorFile = new JSDOM(file)
+            errorFile.window.document.getElementById("errorMessage").innerHTML = err
+            response.send(errorFile.serialize())
+        }
     }
 })
 
 app.get('/registerCandidate', async function (request, response) {
-    try {
-        response, sendFile(path.join(__dirname + "/adminRegister.html"))
-    } catch(err) {
-        file = fs.readFileSync(__dirname + "/error.html")
-        errorFile = new JSDOM(file)
-        errorFile.window.document.getElementById("errorMessage").innerHTML = err
-        response.send(errorFile.serialize())
+    if(!halt) {
+        try {
+            response, sendFile(path.join(__dirname + "/adminRegister.html"))
+        } catch(err) {
+            file = fs.readFileSync(__dirname + "/error.html")
+            errorFile = new JSDOM(file)
+            errorFile.window.document.getElementById("errorMessage").innerHTML = err
+            response.send(errorFile.serialize())
+        }
+    } else {
+        // response.send("Election has ended")
+        response.sendFile(path.join(__dirname + "/halted.html"))
     }
 })
 
 app.post('/CandidateRegistered', async function (request, response) {
-    try {
-        // console.log("Details of new Candidate are " , request.body.nameOfCandidate, request.body.representing, request.body.ageOfCandidate)
-        var result = await registerCandidate(request.body.nameOfCandidate, request.body.representing, request.body.ageOfCandidate)
-        response.redirect("/adminDash")
-    } catch(err) {
-        file = fs.readFileSync(__dirname + "/error.html")
-        errorFile = new JSDOM(file)
-        errorFile.window.document.getElementById("errorMessage").innerHTML = err
-        response.send(errorFile.serialize())
+    if(!halt) {
+        try {
+            // console.log("Details of new Candidate are " , request.body.nameOfCandidate, request.body.representing, request.body.ageOfCandidate)
+            var result = await registerCandidate(request.body.nameOfCandidate, request.body.representing, request.body.ageOfCandidate)
+            response.redirect("/adminDash")
+        } catch(err) {
+            file = fs.readFileSync(__dirname + "/error.html")
+            errorFile = new JSDOM(file)
+            errorFile.window.document.getElementById("errorMessage").innerHTML = err
+            response.send(errorFile.serialize())
+        }
+    } else {
+        // response.send("Election has ended")
+        response.sendFile(path.join(__dirname + "/halted.html"))
     }
 })
 
 app.get('/voterVoted', async function (request, response) {
-    try {
-        console.log("Number", request.query.voteTo)
-        await doVote(request.query.voteTo, voterID)
-        response.redirect('/loginVoter')
-    } catch(err) {
-        file = fs.readFileSync(__dirname + "/error.html")
-        errorFile = new JSDOM(file)
-        errorFile.window.document.getElementById("errorMessage").innerHTML = err
-        response.send(errorFile.serialize())
+    if(!halt) {
+        try {
+            console.log("Number", request.query.voteTo)
+            await doVote(request.query.voteTo, voterID)
+            response.redirect('/loginVoter')
+        } catch(err) {
+            file = fs.readFileSync(__dirname + "/error.html")
+            errorFile = new JSDOM(file)
+            errorFile.window.document.getElementById("errorMessage").innerHTML = err
+            console.log(err)
+            response.send(errorFile.serialize())
+        }
+    } else {
+        // response.send("Election has ended")
+        response.sendFile(path.join(__dirname + "/halted.html"))
     }
+})
+
+app.get('/haltElection', async function (request, response) {
+    console.log(halt)
+    halt = true
+    console.log(halt)
+    response.redirect(adminDash)
 })
