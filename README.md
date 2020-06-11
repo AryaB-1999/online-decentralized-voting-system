@@ -9,7 +9,7 @@ To run the project, use the following commands :
 2. npm install
 3. npm start
 
-Server will listen to port no 8080
+Server will listen to port no 10000
 
 Project is done with the following :
 1. Solidity
